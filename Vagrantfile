@@ -36,6 +36,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # Iterate through entries in YAML file to create VMs
   servers.each do |server|
     config.vm.define server['name'] do |srv|
+    	SERVER_NAME=server['name']
       # Don't check for box updates
       srv.vm.box_check_update = false
       srv.vm.hostname = server['name']
@@ -44,9 +45,18 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       srv.vm.network 'private_network', ip: server['priv_ip']
       # Enable default synced folder
       srv.vm.synced_folder '.', '/vagrant'
+      # Add a non-root volume (needs vagrant plugin vagrant-persistent-storage)
+      #srv.persistent_storage.enabled = true
+      #srv.persistent_storage.location = "./data/#{SERVER_NAME}.sourcehdd.vdi"
+      #srv.persistent_storage.size = 500
+      #srv.persistent_storage.mountname = 'gfs'
+      #srv.persistent_storage.filesystem = 'xfs'
+      #srv.persistent_storage.mountpoint = '/gluster/data'
+      #srv.persistent_storage.volgroupname = 'gfsvg'
+      srv.vm.provision 'shell', path: 'scripts/setHosts.sh'
       # Run Docker installation
-      srv.vm.provision 'shell', path: 'scripts/installDocker.sh'
-      srv.vm.provision 'shell', path: 'scripts/configSwarm.sh'
+      #srv.vm.provision 'shell', path: 'scripts/installDocker.sh'
+      #srv.vm.provision 'shell', path: 'scripts/configSwarm.sh'
       #srv.vm.network "forwarded_port", guest: 80, host: server['fw_port']
       # Configure VMs with RAM and CPUs per settings in servers.yml (VirtualBox)
       srv.vm.provider :virtualbox do |vb|
